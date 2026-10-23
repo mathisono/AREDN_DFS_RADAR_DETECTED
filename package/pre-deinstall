@@ -1,0 +1,8 @@
+#!/bin/sh
+# Do not touch the build host when installing/removing an image root.
+[ -n "${IPKG_INSTROOT:-}" ] && exit 0
+if [ -x /etc/init.d/aredn-dfs-detector ]; then
+    /etc/init.d/aredn-dfs-detector stop || exit 1
+    /etc/init.d/aredn-dfs-detector disable || exit 1
+fi
+exit 0

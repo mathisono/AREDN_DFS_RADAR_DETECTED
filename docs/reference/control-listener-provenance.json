@@ -1,0 +1,22 @@
+{
+  "repository": "https://android.googlesource.com/platform/external/wpa_supplicant_8",
+  "revision": "ab49c33aef291e4d9cabe9a16f535bca40569a10",
+  "files": {
+    "src/common/wpa_ctrl.c": {
+      "url": "https://android.googlesource.com/platform/external/wpa_supplicant_8/+/ab49c33aef291e4d9cabe9a16f535bca40569a10/src/common/wpa_ctrl.c",
+      "sha256": "c8ad95a256a1b7e8018db0ed697f4690523bc9299afa8eb4ca4dd73793938212"
+    },
+    "hostapd/ctrl_iface.c": {
+      "url": "https://android.googlesource.com/platform/external/wpa_supplicant_8/+/ab49c33aef291e4d9cabe9a16f535bca40569a10/hostapd/ctrl_iface.c",
+      "sha256": "c61c4b62c583e62330a293af354c0834fc3d9c7d042e6af44c91a4cae54b9e00"
+    },
+    "src/ap/dfs.c": {
+      "url": "https://android.googlesource.com/platform/external/wpa_supplicant_8/+/ab49c33aef291e4d9cabe9a16f535bca40569a10/src/ap/dfs.c",
+      "sha256": "c43be0b397d7d8bc1b447f6d18435c95f4f00bddb09cac1d5cf3df5456103139"
+    },
+    "src/common/wpa_ctrl.h": {
+      "url": "https://android.googlesource.com/platform/external/wpa_supplicant_8/+/ab49c33aef291e4d9cabe9a16f535bca40569a10/src/common/wpa_ctrl.h",
+      "sha256": "dc6b1770e5db4bafb9a36c12e839e740c66120bae5483fedd63bfcb3b06ae1db"
+    }
+  }
+}

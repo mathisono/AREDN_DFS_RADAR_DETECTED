@@ -1,0 +1,5 @@
+config detector 'main'
+	option enabled '0'
+	# Set these to the actual AP interface and existing control socket directory.
+	option interface ''
+	option control_dir ''

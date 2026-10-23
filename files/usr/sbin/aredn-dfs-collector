@@ -1,0 +1,61 @@
+#!/bin/sh
+# Passive hostapd_cli action collector. No radio/configuration commands.
+set -u
+dfs_check=0
+if [ "${1:-}" = '--check' ]; then dfs_check=1; shift; fi
+if [ "$#" -ne 2 ]; then
+    echo 'usage: aredn-dfs-collector [--check] INTERFACE CONTROL_DIRECTORY' >&2
+    exit 2
+fi
+dfs_iface=$1
+dfs_dir=$2
+case "$dfs_iface" in
+    ''|*[!A-Za-z0-9_.-]*) echo 'invalid interface' >&2; exit 2 ;;
+esac
+case "$dfs_dir" in
+    /*) ;;
+    *) echo 'control directory must be absolute' >&2; exit 2 ;;
+esac
+for dfs_cmd in hostapd_cli timeout logger; do
+    command -v "$dfs_cmd" >/dev/null 2>&1 || {
+        echo "collection unavailable: missing $dfs_cmd" >&2; exit 1;
+    }
+done
+[ -S "$dfs_dir/$dfs_iface" ] || {
+    echo 'collection unavailable: configured control socket is missing' >&2
+    exit 1
+}
+dfs_pong=$(timeout 5 hostapd_cli -p "$dfs_dir" -i "$dfs_iface" ping) || {
+    echo 'collection unavailable: control PING failed or timed out' >&2
+    exit 1
+}
+[ "$dfs_pong" = PONG ] || {
+    echo 'collection unavailable: control did not return PONG' >&2; exit 1;
+}
+if [ "$dfs_check" -eq 1 ]; then
+    echo 'control socket responsive; DFS capability/event delivery NOT verified'
+    exit 0
+fi
+dfs_action=/usr/libexec/aredn-dfs-action.sh
+[ -x "$dfs_action" ] || {
+    echo 'collection unavailable: action helper is missing' >&2; exit 1;
+}
+dfs_pid=''
+dfs_stop() {
+    trap '' TERM INT
+    if [ -n "$dfs_pid" ]; then
+        kill "$dfs_pid" 2>/dev/null || :
+        wait "$dfs_pid" 2>/dev/null || :
+    fi
+    echo 'collection stopped; no further event coverage' >&2
+    exit 0
+}
+trap dfs_stop TERM INT
+echo "starting passive collection: interface=$dfs_iface; event delivery not yet verified" >&2
+hostapd_cli -p "$dfs_dir" -i "$dfs_iface" -a "$dfs_action" &
+dfs_pid=$!
+wait "$dfs_pid"
+dfs_rc=$?
+echo "collection unavailable: hostapd_cli exited ($dfs_rc); coverage gap begins" >&2
+# Upstream can exit zero on a failed heartbeat. That is not a healthy collector.
+exit 1
