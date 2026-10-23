@@ -33,11 +33,18 @@ hostapd_cli -p /var/run/hostapd -i wlan0 -a /tmp/dfs_action.sh
 Read `logread -f` off-node with `--relay-only`. Do not run this alongside the APK
 service. The action preserves every event argument after the interface and
 logs only exact accepted tokens. Its PID helps distinguish same-second records.
-The helper writes no state files, but logger follows existing syslog retention
+Without banner output, the helper writes no state files, but logger follows existing syslog retention
 and forwarding. Stop the foreground CLI and remove your temporary helper when
 finished. A zero CLI exit or running process does not guarantee healthy delivery;
 in reviewed upstream code PING loss can exit zero and action errors are not
 propagated. See [DETECTION.md](DETECTION.md).
+
+For the r2 detection-test banner, also stage executable `dfs_banner.sh` and set
+`DFS_BANNER_HELPER=/tmp/dfs_banner.sh` in the foreground CLI environment. Only
+explicit radar reports update the message and read the event interface's passive
+current-channel noise. Readings are timestamped snapshots, not continuous noise
+monitoring or radar-pulse measurements. See [BANNER.md](BANNER.md) for selection,
+simulation separation and scoped cleanup.
 
 ## Native ubus subscription
 

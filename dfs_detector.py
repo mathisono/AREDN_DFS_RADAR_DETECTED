@@ -207,7 +207,7 @@ class ControlCapture:
         return event
 
 
-def monitor_control(args):
+def monitor_control(args, banner=None):
     from hostapd_control import listen
 
     capture = ControlCapture(args.node, args.interface, args.boot_id)
@@ -226,6 +226,8 @@ def monitor_control(args):
         event = capture.parse(line)
         if event is not None:
             print(json.dumps(event, sort_keys=True), flush=True)
+            if banner:
+                banner.emit(event)
 
     status("connecting")
     try:
@@ -251,13 +253,18 @@ def main(argv=None):
     mode.add_argument("--ubus-object", help="parse JSON lines from ONE hostapd object subscription")
     mode.add_argument("--relay-only", action="store_true", help="accept only tagged dfs_action.sh log records")
     parser.add_argument("--interface", help="interface identity for the control socket")
+    parser.add_argument("--banner-dir", help="opt-in LOCAL AREDN message directory (normally /tmp/other_messages)")
     args = parser.parse_args(argv)
+    banner = None
+    if args.banner_dir:
+        from aredn_banner import BannerSink
+        banner = BannerSink(args.banner_dir)
     if args.control_socket:
         if args.logfile is not None or args.summary:
             parser.error("--control-socket cannot be combined with a logfile or --summary")
         if not args.interface:
             parser.error("--control-socket requires --interface")
-        monitor_control(args)
+        monitor_control(args, banner)
         return 0
     if args.interface:
         parser.error("--interface is only used with --control-socket")
@@ -273,6 +280,8 @@ def main(argv=None):
                 continue
             if args.relay_only and event["source"] != "hostapd_cli_log":
                 continue
+            if banner:
+                banner.emit(event)
             if args.summary:
                 records.append(event)
             else:

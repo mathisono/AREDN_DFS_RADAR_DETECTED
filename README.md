@@ -9,10 +9,13 @@ its explicit reports, preserves the reported frequency, and distinguishes them
 from channel changes and other DFS lifecycle events. It never changes channels,
 regulatory settings, transmit power, or radio configuration.
 
-**Status: experimental 0.1.0-r1.** Source, synthetic tests, package build and
-installation instructions are available. Genuine AP-side radar confirmation
-and installation qualification on the intended AREDN firmware remain pending.
-Installation leaves the service disabled and the interface unset.
+**Status: experimental.** The published release is **0.1.0-r1**; current source
+is the **0.1.0-r2 development candidate**, adding the opt-in announcement banner
+and passive channel-noise snapshot. The r1 release assets are unchanged and do
+not contain these additions. Build r2 from source using [BUILD.md](BUILD.md).
+Genuine AP-side radar confirmation and package installation qualification on
+an eligible target remain pending. Installation leaves the service and banner
+disabled and the interface unset.
 
 ## Download and install
 
@@ -38,6 +41,7 @@ Existing radio/driver DFS implementation
   -> hostapd_cli action subscription
   -> installed shell action (preserves all arguments)
   -> syslog: hostapd-dfs / DFS_RELAY / IFNAME / event / frequency
+  -> optional local AREDN announcement + passive noise snapshot (r2)
   -> optional off-node Python JSON parser and summary
 ```
 
@@ -54,9 +58,24 @@ channel. It does not prove a physical emitter or a channel vacation. Silence
 does not establish that radar is absent. See [DETECTION.md](DETECTION.md) for
 frequency handling, counting, source identity, limitations and source references.
 
+## Detection-test banner and noise measurements
+
+The opt-in [AREDN banner](BANNER.md) shows the latest explicit radar report and,
+on the native action path, the radio's noise floor in **dBm**, measured
+channel/frequency, interface and read time. It uses only a verified active
+survey entry; missing readings are unavailable, not zero. A post-switch sample
+is not attributed to the old radar channel. Noise alone never flags radar.
+
+The `demo` command clearly separates **SIMULATED radar data** from a **real
+radio noise snapshot**. Samples are collected on banner updates, not continuously.
+The helper and live status response were checked on the existing test node;
+see the [sanitized display/noise validation](docs/DEV1-BANNER-VALIDATION.md).
+
 ## Repository contents
 
 - `dfs_action.sh`: single source for the packaged native event action.
+- `dfs_banner.sh`: packaged opt-in announcement and passive noise helper.
+- `aredn_banner.py`: optional local Python banner sink, without workstation noise reads.
 - `files/`: UCI defaults, opt-in procd service and passive collector launcher.
 - `package/`: package removal/upgrade cleanup scripts; no auto-start hook.
 - `build.py`, `VERSION`: reproducible APK v3 build with official apk-tools.
@@ -64,6 +83,7 @@ frequency handling, counting, source identity, limitations and source references
   local control-socket collector (Python standard library only).
 - `test_*.py`: parser, native-action, socket and package/service checks.
 - `docs/reference/`: pinned upstream source URLs and hashes, not field logs.
+- [BANNER.md](BANNER.md): enablement, simulated display, noise semantics and cleanup.
 - [OPENWRT.md](OPENWRT.md): existing-log, action-relay and ubus capture recipes.
 - [BUILD.md](BUILD.md), [VERIFICATION.md](VERIFICATION.md),
   [BACKUP.md](BACKUP.md): build, test boundaries and restore instructions.

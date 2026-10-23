@@ -1,5 +1,10 @@
 # Install, configure and remove the OpenWrt APK
 
+The download examples below refer to the published **r1** release. Current
+source builds the **r2 candidate**; substitute its versioned filename when
+testing your own build. Banner/noise support requires r2 and is not retrofitted
+into the existing r1 APK. See [BUILD.md](BUILD.md).
+
 ## Compatibility and dependency check
 
 This unsigned, architecture-independent shell package targets **apk-tools 3.x
@@ -10,7 +15,7 @@ or an unrelated firmware feed to satisfy this dependency. If the firmware uses
 opkg, stop: this APK is not an IPK. No target-specific live installation has
 yet been qualified.
 
-Also check `command -v timeout`: the r1 launcher requires this command, while
+Also check `command -v timeout`: the launcher requires this command, while
 its BusyBox dependency does not guarantee the applet is present in a particular
 firmware build. Do not enable the collector if it is absent. The
 [Dev1 check](docs/DEV1-VALIDATION.md) found both `hostapd_cli` and `timeout`
@@ -46,6 +51,7 @@ Installation does **not** start or enable the collector. Installed files:
 | Path | Purpose |
 |---|---|
 | `/usr/libexec/aredn-dfs-action.sh` | Exact-token DFS/context relay to syslog |
+| `/usr/libexec/aredn-dfs-banner.sh` | r2: opt-in local announcement and noise snapshot |
 | `/usr/sbin/aredn-dfs-collector` | Validated hostapd_cli launcher |
 | `/etc/config/aredn-dfs-detector` | Disabled UCI defaults |
 | `/etc/init.d/aredn-dfs-detector` | Opt-in procd service |
@@ -99,6 +105,12 @@ The service does not automatically restart after source loss. Investigate its
 diagnostics, then explicitly restart it and retain the gap in your evidence.
 `status`/PING means process/transport state, not verified radar coverage.
 
+For r2 builds, the banner is separately disabled by default. On a qualified,
+configured collector, set `main.banner='1'`, commit and restart the service to
+enable it. See [BANNER.md](BANNER.md) for exact commands, display-only testing,
+noise limits, visibility and cleanup. `iw` survey support is optional; missing
+noise data does not suppress a radar report or become a zero reading.
+
 For JSON output, run from the repository on the monitoring computer (Bash):
 
 ```sh
@@ -132,3 +144,8 @@ The removal hook also stops/disables the service. Modified configuration may
 be retained by APK. Removal does not clear syslog, uninstall the radio driver,
 restart wireless, or erase your exported observations. Firmware sysupgrades may
 require reinstalling the package; this project adds no sysupgrade policy.
+
+In r2, stopping or upgrading retains the last announcement until explicitly
+cleared. Uninstall clears only `/tmp/other_messages/aredn-dfs-detection-test`;
+it preserves every other announcement. A standalone `/tmp` demo is not owned
+by the package lifecycle; follow its manual cleanup instructions in BANNER.md.

@@ -100,10 +100,15 @@ class CollectorTests(unittest.TestCase):
 
 
 class ServiceTests(unittest.TestCase):
-    def run_service(self, enabled, interface='test0', directory='/var/run/hostapd'):
+    def run_service(self, enabled, interface='test0', directory='/var/run/hostapd', banner=0):
         harness = r'''
 config_load() { :; }
-config_get_bool() { enabled=$TEST_ENABLED; }
+config_get_bool() {
+    case "$1" in
+      enabled) enabled=$TEST_ENABLED ;;
+      banner) banner=$TEST_BANNER ;;
+    esac
+}
 config_get() {
     case "$1" in
       interface) interface=$TEST_INTERFACE ;;
@@ -117,7 +122,7 @@ procd_set_param() { printf '<%s>\n' "$@"; }
 start_service
 '''
         env = dict(os.environ, TEST_INIT=str(INIT), TEST_ENABLED=str(enabled),
-                   TEST_INTERFACE=interface, TEST_DIRECTORY=directory)
+                   TEST_INTERFACE=interface, TEST_DIRECTORY=directory, TEST_BANNER=str(banner))
         return subprocess.run(['/bin/sh', '-c', harness], env=env,
                               text=True, capture_output=True, timeout=3)
 
@@ -138,6 +143,41 @@ start_service
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('</usr/sbin/aredn-dfs-collector>\n<test0>\n</tmp/control directory>', result.stdout)
         self.assertNotIn('<respawn>', result.stdout)
+
+    def test_banner_is_disabled_by_default_and_only_exports_packaged_helper_when_enabled(self):
+        self.assertIn("option banner '0'", (ROOT / 'files/etc/config/aredn-dfs-detector').read_text())
+        disabled = self.run_service(1)
+        self.assertEqual(disabled.returncode, 0, disabled.stderr)
+        self.assertIn('<DFS_BANNER_HELPER=>', disabled.stdout)
+        enabled = self.run_service(1, banner=1)
+        self.assertEqual(enabled.returncode, 0, enabled.stderr)
+        self.assertIn('<DFS_BANNER_HELPER=/usr/libexec/aredn-dfs-banner.sh>', enabled.stdout)
+        self.assertEqual(self.run_service(0, banner=1).stdout, '')
+
+    def test_remove_clears_only_owned_banner_but_upgrade_retains_last_report(self):
+        with tempfile.TemporaryDirectory(prefix='dfs-remove-') as temp:
+            tmp = Path(temp)
+            messages = tmp / 'messages'
+            messages.mkdir()
+            owned = messages / 'aredn-dfs-detection-test'
+            owned.write_text('last report')
+            other = messages / 'another-addon'
+            other.write_text('keep')
+            init = tmp / 'init'
+            init.write_text('#!/bin/sh\nexit 0\n')
+            init.chmod(0o755)
+            for name in ['pre-upgrade', 'pre-deinstall']:
+                hook = tmp / name
+                source = (ROOT / 'package' / name).read_text()
+                source = source.replace('/etc/init.d/aredn-dfs-detector', str(init))
+                source = source.replace('/usr/libexec/aredn-dfs-banner.sh', str(ROOT / 'dfs_banner.sh'))
+                hook.write_text(source)
+                result = subprocess.run(['/bin/sh', str(hook)],
+                                        env=dict(os.environ, IPKG_INSTROOT='', DFS_BANNER_DIR=str(messages)),
+                                        capture_output=True, text=True, timeout=3)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(owned.exists(), name == 'pre-upgrade')
+                self.assertEqual(other.read_text(), 'keep')
 
     def test_image_root_lifecycle_hooks_do_not_touch_host_services(self):
         for hook in ['pre-upgrade', 'pre-deinstall']:
@@ -179,6 +219,7 @@ class PackageArtifactTests(unittest.TestCase):
                             '--destination', str(dest), str(outputs[0])], check=True, capture_output=True)
             expected = {p.relative_to(ROOT / 'files'): p for p in (ROOT / 'files').rglob('*') if p.is_file()}
             expected[Path('usr/libexec/aredn-dfs-action.sh')] = ROOT / 'dfs_action.sh'
+            expected[Path('usr/libexec/aredn-dfs-banner.sh')] = ROOT / 'dfs_banner.sh'
             actual = {p.relative_to(dest) for p in dest.rglob('*') if p.is_file()}
             self.assertEqual(actual, set(expected))
             for relative, source in expected.items():

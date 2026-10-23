@@ -194,18 +194,23 @@ class ControlSocketTests(unittest.TestCase):
         script = str(Path(__file__).with_name("dfs_detector.py"))
         with FakeHostapd(after_attach=[RADAR, RADAR]) as server:
             with tempfile.TemporaryFile(mode="w+") as output, \
-                    tempfile.TemporaryFile(mode="w+") as status:
+                    tempfile.TemporaryFile(mode="w+") as status, \
+                    tempfile.TemporaryDirectory(prefix="dfs-cli-banner-") as messages:
                 proc = subprocess.Popen(
                     [sys.executable, script, "--node", "test-ap", "--interface", "wlan0",
-                     "--control-socket", server.path], stdout=output, stderr=status)
+                     "--control-socket", server.path, "--banner-dir", messages],
+                    stdout=output, stderr=status)
                 try:
                     self.assertTrue(server.attached.wait(2))
                     # Read without changing the writer's shared file offset.
                     # The readiness check is bounded by the test deadline.
                     deadline = time.monotonic() + 2
                     while time.monotonic() < deadline:
-                        if len(os.pread(output.fileno(), 65536, 0).splitlines()) == 2:
-                            break
+                        banner = Path(messages) / "aredn-dfs-detection-test"
+                        lines = os.pread(output.fileno(), 65536, 0).splitlines()
+                        if len(lines) == 2 and banner.exists():
+                            if json.loads(lines[-1])["ingested_at_utc"] in banner.read_text():
+                                break
                         time.sleep(0.01)
                     else:
                         self.fail("CLI did not emit both fixture events")
@@ -222,6 +227,8 @@ class ControlSocketTests(unittest.TestCase):
                 self.assertEqual(states, ["connecting", "attached", "stopped"])
                 self.assertEqual(len({r["event_id"] for r in records}), 2)
                 self.assertEqual({r["reported_primary_channel"] for r in records}, {132})
+                self.assertIn("channel 132 (5660 MHz)", banner.read_text())
+                self.assertFalse(list(Path(messages).glob(".aredn-dfs-stage.*")))
                 self.assertTrue(server.detached.wait(1))
                 self.assertFalse(os.path.exists(Path(server.address).parent))
 

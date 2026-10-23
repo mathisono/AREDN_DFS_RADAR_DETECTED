@@ -53,7 +53,7 @@ messages did **not** enter the node's real syslog or radio event stream.
 9. Collector preflight failed visibly for the missing `hostapd_cli` dependency.
 
 These checks supplement, rather than replace, the original
-[64-test local verification](../VERIFICATION.md).
+[64-test local verification](../VERIFICATION.md#historical-r1-checkpoint).
 
 ## Observation and unchanged state
 

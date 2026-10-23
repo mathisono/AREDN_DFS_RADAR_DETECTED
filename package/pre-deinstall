@@ -5,4 +5,7 @@ if [ -x /etc/init.d/aredn-dfs-detector ]; then
     /etc/init.d/aredn-dfs-detector stop || exit 1
     /etc/init.d/aredn-dfs-detector disable || exit 1
 fi
+if [ -x /usr/libexec/aredn-dfs-banner.sh ]; then
+    /usr/libexec/aredn-dfs-banner.sh clear || exit 1
+fi
 exit 0

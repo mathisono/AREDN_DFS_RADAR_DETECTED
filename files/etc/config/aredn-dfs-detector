@@ -1,5 +1,7 @@
 config detector 'main'
 	option enabled '0'
+	# Optional local announcement with a passive current-channel noise snapshot.
+	option banner '0'
 	# Set these to the actual AP interface and existing control socket directory.
 	option interface ''
 	option control_dir ''

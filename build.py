@@ -35,11 +35,15 @@ def main():
     with tempfile.TemporaryDirectory(prefix='aredn-dfs-build-') as tmp:
         stage = Path(tmp) / 'root'
         shutil.copytree(ROOT / 'files', stage)
-        action = stage / 'usr/libexec/aredn-dfs-action.sh'
-        action.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(ROOT / 'dfs_action.sh', action)
+        helpers = []
+        for source, name in [('dfs_action.sh', 'aredn-dfs-action.sh'),
+                             ('dfs_banner.sh', 'aredn-dfs-banner.sh')]:
+            helper = stage / 'usr/libexec' / name
+            helper.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / source, helper)
+            helpers.append(helper)
         for entry in [stage, *stage.rglob('*')]:
-            executable = entry.is_dir() or entry == action or '/init.d/' in str(entry) or '/sbin/' in str(entry)
+            executable = entry.is_dir() or entry in helpers or '/init.d/' in str(entry) or '/sbin/' in str(entry)
             entry.chmod(0o755 if executable else 0o644)
             os.chown(entry, 0, 0)
             os.utime(entry, (epoch, epoch))

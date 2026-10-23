@@ -131,6 +131,34 @@ class ActionRelayTests(unittest.TestCase):
         self.assertEqual(report["unique_event_records"], 1)
         self.assertEqual(report["flagged_channels"][0]["radar_report_records"], 1)
 
+    def test_native_action_to_banner_flags_only_radar_and_keeps_context_out(self):
+        messages = self.directory / "messages"
+        self.env.update(DFS_BANNER_HELPER=str(SCRIPT.with_name("dfs_banner.sh")),
+                        DFS_BANNER_DIR=str(messages), DFS_NODE_NAME="fixture-ap")
+        target = messages / "aredn-dfs-detection-test"
+        for event in ["DFS-CAC-START", "DFS-NOP-FINISHED", "DFS-NEW-CHANNEL"]:
+            self.assertEqual(self.run_action(["wlan0", event, "freq=5180"]).returncode, 0)
+        self.assertFalse(target.exists())
+        self.assertEqual(self.run_action(["wlan0", *RADAR_ARGS]).returncode, 0)
+        original = target.read_bytes()
+        self.assertIn(b"channel 132 (5660 MHz), fixture-ap / wlan0", original)
+        self.assertEqual(self.run_action(["wlan0", "AP-CSA-FINISHED", "freq=5180"]).returncode, 0)
+        self.assertEqual(target.read_bytes(), original)
+
+    def test_native_banner_unknown_frequency_and_logger_failure_are_preserved(self):
+        messages = self.directory / "messages"
+        self.env.update(DFS_BANNER_HELPER=str(SCRIPT.with_name("dfs_banner.sh")),
+                        DFS_BANNER_DIR=str(messages), DFS_NODE_NAME="fixture-ap")
+        target = messages / "aredn-dfs-detection-test"
+        for fields in [["cf1=5670"], ["freq=5660", "freq=5180"], ["freq=-1"]]:
+            with self.subTest(fields=fields):
+                result = self.run_action(["wlan0", "DFS-RADAR-DETECTED", *fields])
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("channel unknown (unknown frequency)", target.read_text())
+        self.env["DFS_TEST_LOGGER_EXIT"] = "7"
+        self.assertEqual(self.run_action(["wlan0", *RADAR_ARGS]).returncode, 7)
+        self.assertIn("channel 132 (5660 MHz)", target.read_text())
+
 
 class NativeUbusTests(unittest.TestCase):
     def capture(self):

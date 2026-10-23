@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/aredn/aredn",
+  "revision": "8c028e999413c0640b89b3e1102aae9e402d0d44",
+  "files": {
+    "files/usr/share/ucode/aredn/messages.uc": {
+      "url": "https://github.com/aredn/aredn/blob/8c028e999413c0640b89b3e1102aae9e402d0d44/files/usr/share/ucode/aredn/messages.uc",
+      "sha256": "8507aa1f2cc7293e013ff8f51bc2f54614da9ec9f576386c237601b902e122f6",
+      "matches_pinned_commit": true
+    },
+    "files/app/partial/messages.ut": {
+      "url": "https://github.com/aredn/aredn/blob/8c028e999413c0640b89b3e1102aae9e402d0d44/files/app/partial/messages.ut",
+      "sha256": "d33e9ae11d6c97917c3a3d564bfb9d6e81c406c1f353fe2d8f74fe6bfc81f282",
+      "matches_pinned_commit": true
+    }
+  },
+  "scope": "Unmodified native message-reader/template bodies, with isolated import/filesystem bindings for tests; not bundled in the APK."
+}

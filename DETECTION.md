@@ -62,6 +62,19 @@ source per radio: do not add native logs and their relay copies. `--relay-only`
 excludes untagged originals. Multiple BSS ubus notifications may describe the
 same radio report. Summaries group by node, interface and reported frequency.
 
+## Optional announcement and noise context
+
+The r2 banner is a separate sink for the latest explicit radar report. Noise
+does not affect classification, counts, event frequency or collector health.
+The native action reads the local interface's passive survey and accepts only
+a uniquely matching in-use channel, with unchanged radio identity/frequency
+before and after. Missing/failed readings remain unavailable. A changed channel
+is labeled separately, never substituted for the event's `freq`.
+
+Noise is a driver noise-floor snapshot, not radar pulse power or proof of the
+cause of a low-rate condition. Its UTC timestamp is read time, not a known
+hardware measurement time. See [BANNER.md](BANNER.md) for timing and display rules.
+
 ## Source health and gaps
 
 The node launcher checks the socket and bounded PING before starting. It reports
