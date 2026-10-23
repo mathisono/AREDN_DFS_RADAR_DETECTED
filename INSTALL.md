@@ -10,6 +10,12 @@ or an unrelated firmware feed to satisfy this dependency. If the firmware uses
 opkg, stop: this APK is not an IPK. No target-specific live installation has
 yet been qualified.
 
+Also check `command -v timeout`: the r1 launcher requires this command, while
+its BusyBox dependency does not guarantee the applet is present in a particular
+firmware build. Do not enable the collector if it is absent. The
+[Dev1 check](docs/DEV1-VALIDATION.md) found both `hostapd_cli` and `timeout`
+missing, unresolved install dependencies, and no active hostapd source.
+
 Download the APK and `SHA256SUMS` from the same GitHub release, then on the
 monitoring computer:
 

@@ -105,4 +105,6 @@ driver, active DFS/regulatory capability and corroborating passive driver/state
 evidence where available. Distinguish driver false positives, background events,
 channel changes and collection gaps. Do not manufacture an RF event or change
 the production link to test the parser. Public status JSON alone lacks the
-needed radar evidence; request an API extension only after this confirmation.
+needed radar evidence. Community review of an API extension can help establish
+the right source and schema; implementation claims still require this field
+confirmation.

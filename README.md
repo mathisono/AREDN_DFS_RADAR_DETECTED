@@ -21,6 +21,11 @@ Get `aredn-dfs-detector-0.1.0-r1.apk` and `SHA256SUMS` from
 Requires an **apk-tools 3.x AREDN/OpenWrt build**, BusyBox, procd, UCI and a
 firmware-compatible `hostapd-utils` package. No Python is installed on the node.
 
+The collector also requires a `timeout` command; do not assume the firmware's
+BusyBox includes it. [Dev1 validation](docs/DEV1-VALIDATION.md) passed APK
+verification/extraction and 9 native synthetic checks, but that target lacked
+required commands and an active hostapd event source. It was not live-installed.
+
 Follow [INSTALL.md](INSTALL.md) for checksum verification, dependency simulation,
 interface discovery, explicit enablement, observation, upgrade and removal.
 Do not install this `.apk` on opkg/IPK-based firmware or Android.
@@ -73,6 +78,14 @@ private radio telemetry, node identities, unrelated watchdog code and local
 agent/workspace state are not part of this repository. No open-source license
 has yet been selected for this project; publication alone does not grant one.
 
-Public AREDN JSON radar-field support is a future step **after real-device
-confirmation**. This release does not modify the public JSON API or make that
-request upstream.
+Public AREDN JSON radar-field support is proposed for community review, not
+implemented by this release. Integration still needs real-device confirmation
+and a capability-aware design; unsupported sources must not appear radar-free.
+
+## Maintenance and community feedback
+
+The separate APK will continue to be maintained through and after the next
+AREDN stable release. The maintainer does not currently experience interference
+problems on their own network and needs community feedback and genuine radar-hit
+examples to validate event capture. See the
+[field-report guidance](docs/DEV1-VALIDATION.md#community-validation-and-maintenance).
