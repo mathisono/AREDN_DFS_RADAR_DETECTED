@@ -5,6 +5,21 @@ in [INSTALL.md](INSTALL.md). Existing logs or native ubus may already provide th
 needed evidence without an extra service. None of these recipes constitutes
 live validation or initiates a deployment by itself.
 
+## Qualify DFS before choosing a transport
+
+An installed AP-capable binary, a hostapd socket, or advertised radar-detection
+widths does not prove that DFS detection is enabled. Check the actual interface
+role/frequency, regulatory DFS region, channel radar flags, and driver/firmware
+state. The [DEV1 RC23 check](docs/DEV1-VALIDATION.md) found an HX `DFS-UNSET`
+profile with no radar-marked channels, a disabled 5 GHz radio, and no AP feed.
+Installing a client utility or merely enabling an AP would not resolve all
+those independent limitations.
+
+Use an already-qualified DFS-capable AP for real-event capture. Do not treat a
+debugfs simulated event, noise reading, zero counter, or silent log as proof of
+genuine radar detection. Do not change the regulatory profile merely to make a
+capture test appear successful.
+
 ## Existing logs
 
 From this repository on the monitoring computer, using Bash and an authorized

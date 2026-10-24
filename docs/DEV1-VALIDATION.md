@@ -1,5 +1,58 @@
 # Dev1 validation — 2026-10-23
 
+## Follow-up on RC `20261023-b3502ade`
+
+Rechecked on 2026-10-24 UTC (2026-10-23 local). The simulated announcement was
+removed at the owner's request. No simulated event was injected into hostapd,
+netlink, debugfs, or the real syslog stream.
+
+The remaining limitations are **three separate gates**, not just a missing APK:
+
+1. **Tool availability.** The node's five configured AREDN snapshot feeds were
+   refreshed successfully into a private temporary cache. Neither
+   `hostapd-utils` nor `coreutils-timeout` was present among the 261 available
+   packages. A fresh install simulation could not resolve either. `hostapd_cli`
+   and the BusyBox `timeout` applet remain absent. This is evidence about those
+   exact feeds, not all OpenWrt/AREDN versions. No unrelated repository,
+   dependency override, wpad replacement, or tool installation was used.
+2. **Active event source.** The only active interface is 2.4 GHz IBSS. The 5 GHz
+   radio is disabled, with no AP interface, per-interface hostapd socket, or
+   `hostapd.*` ubus object. The hostapd-capable `wpad-mini` binary is installed;
+   absence of a running AP feed is distinct from absence of that binary.
+3. **DFS configuration.** `iw reg get` reports `country HX: DFS-UNSET` globally
+   and on both PHYs. `iw phy phy1 info` lists no radar-marked channels, including
+   5500 and 5660 MHz. The matching
+   [AREDN HX patch](https://github.com/aredn/aredn/blob/b3502adec92b863adbd2a7378221548a016f9d13/patches/702-enable-country-hx.patch)
+   defines its frequency ranges without DFS flags. Advertised **radar-detect
+   widths** are driver capabilities, not proof that detection is enabled.
+   Enabling an AP alone under this observed profile would not establish the
+   normal DFS/CAC/radar-report path.
+
+Both ath10k `dfs_block_radar_events` values were `N`; pulse/radar counters were
+zero. This does not demonstrate a functioning detector or the absence of
+physical radar. No regulatory profile, radio role, channel, firmware, or driver
+was changed to obtain evidence.
+
+For genuine capture, select an AP whose firmware actually enables DFS on its
+operating channel and qualify its existing log/socket/ubus source. Existing
+`logread` or `ubus subscribe` paths can avoid the missing client/timeout package
+dependencies altogether; they still require a functioning source. See
+[OPENWRT.md](../OPENWRT.md). This project records reports from that source; it
+does not turn an unqualified radio into an independent radar receiver.
+
+The r2 parser/banner/package suite passed **95/95 isolated tests** against this
+RC's announcement renderer. A real radar event remains **not captured**.
+
+The native wrong-channel-noise problem was separately reconfirmed in three
+hardware samples: current 2397 MHz was −101 dBm, while the installed helper
+returned −90 dBm from cached 2387 MHz. This is not radar evidence. The exact
+open PR helper returned the correct live noise value, while the independent
+remote-SNR consumer still selected the wrong entry. Evidence was added to the
+[existing open issue](https://github.com/aredn/aredn/issues/2952#issuecomment-6378500771),
+not filed as a duplicate.
+
+## Earlier RC13 checkpoint
+
 This is a **native package-format and synthetic handler check**, not a successful
 live collector installation or a real radar-detection demonstration.
 
